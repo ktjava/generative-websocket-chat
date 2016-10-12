@@ -22,8 +22,10 @@ App.room = App.cable.subscriptions.create "RoomChannel",
   $(document).on 'click', '[data-behavior~=room_speaker]', (event) ->
   	nameForm = $('#name_form')
   	messageForm = $('#message_form')
+  	fileForm = $('#file_form')
   	App.room.speak nameForm.val(), messageForm.val(), window.reader
   	messageForm.val('')
+  	fileForm.val('')
     
   $(document).on 'change', '[data-behavior~=image_loader]', (event) ->
     file = event.target.files
