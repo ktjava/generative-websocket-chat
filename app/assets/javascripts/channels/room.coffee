@@ -14,19 +14,20 @@ App.room = App.cable.subscriptions.create "RoomChannel",
       if data["message"] isnt "" then feed += data["message"]
       feed += '</p>'
     　if data["image"] isnt null then feed += '<a href="'+data["image"]+'" target="blank_"><img width="240px" src="'+data["image"]+'"></a>'
-     $('#messages').append(feed)
+     $('#messages').prepend(feed)
     
-  speak: (name, message, reader) ->
-    @perform 'speak', name: name, message: message, image: reader.result
+  speak: (name, message, result) ->
+    @perform 'speak', name: name, message: message, image: result
 
   $(document).on 'click', '[data-behavior~=room_speaker]', (event) ->
   	nameForm = $('#name_form')
   	messageForm = $('#message_form')
   	fileForm = $('#file_form')
-  	App.room.speak nameForm.val(), messageForm.val(), window.reader
+  	App.room.speak nameForm.val(), messageForm.val(), window.reader.result
   	messageForm.val('')
   	fileForm.val('')
+  	window.reader = null
+  	window.reader = new FileReader
     
   $(document).on 'change', '[data-behavior~=image_loader]', (event) ->
-    file = event.target.files
-    window.reader.readAsDataURL(file[0])
+    window.reader.readAsDataURL(event.target.files[0])

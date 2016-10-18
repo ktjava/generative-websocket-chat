@@ -1,17 +1,156 @@
-<h1>Visual WebSocket Chat</h1>
+<canvas id="myCanvas" width="1024" height="768"></canvas>
+<div id="title"><span class="red">R</span>ainbow <span class="green">C</span>olorful <span class="blue">B</span>ubbles</div>
+<div id="chat_shell_open">Chat</div>
+<div id="chat_shell">
+	<h1>Chat Shell</h1>
+	<form>
+		<label>Name:</label>
+		<input type="text" id="name_form" value="">
+		<br>
+		<label>Message:</label>
+		<input type="text" id="message_form" value="">
+		<br>
+		<div><input type="file" id="file_form" data-behavior="image_loader" size="30" value=""></div>
+		<br>
+		<input type="button" data-behavior="room_speaker" value="Submit">
+	</form>
+	<h5>Received Messages</h5>
+	<div id="messages"></div>
+</div>
+<div id="time_open">Time</div>
+<div id="time">
+	<span id="current_time">
+		<h3>Current Time</h3>
+		<span id="current_time_value"></span>
+	</span>
+</div>
+<script type="application/javascript" src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
+<script type="application/javascript" src="https://code.createjs.com/easeljs-0.8.2.min.js"></script>
+<script type="application/javascript">
+<!--
 
-<form>
-  <label>Name:</label>
-  <input type="text" id="name_form" value="">
-  <br>
-  <label>Message:</label>
-  <input type="text" id="message_form" value="">
-  <br>
-  <input type="file" id="file_form" data-behavior="image_loader" size="30" value="">
-  <br>
-  <input type="button" data-behavior="room_speaker" value="Submit">
-</form>
+var stage, circle, line, background, matrix2d, img, nodeNumber=1000, nodeArray = [], linkArray = [], prevX=0, prevY=0, count=0;
 
-<h5>Received Messages</h5>
+function setup(){
+  stage = new createjs.Stage("myCanvas");
+  stage.autoClear = false;
+  stage.compositeOperation = "normal";
+  for(var i=0; i<nodeNumber; ++i){
+    var n = new Node();
+    n.setup(0, 0, 0, 0, "rgba(0,0,0,0)");
+    nodeArray.push(n);
+  }
+  background = new createjs.Shape();
+  background.graphics.beginFill("black").drawRect(0, 0, innerWidth, innerHeight).endFill();
+  background.alpha = 0.3;
+  img = new Image();
+  img.src = "rainbow.png";
+  matrix2d = new createjs.Matrix2D(1,0,0,1,0,0);
+  img.onload = function() {
+    if(innerWidth/innerHeight>=img.width/img.height){
+      matrix2d.a = matrix2d.d = innerWidth/img.width;
+    }else{
+      matrix2d.a = matrix2d.d = innerHeight/img.height;
+    }
+    background.graphics.beginBitmapFill(img, "no-repeat", matrix2d).drawRect(0, 0, innerWidth, innerHeight).endFill();
+  };
+  stage.addChild(background);
+  handleResize();
+  createjs.Ticker.timingMode = createjs.Ticker.RAF;
+  createjs.Ticker.addEventListener("tick", stage);
+  createjs.Ticker.addEventListener("tick", handleTick);
+  window.onresize = handleResize;
+}
+function handleTick(){
+  var mouseX = stage.mouseX, mouseY = stage.mouseY, vx = mouseX - prevX, vy = mouseY - prevY, vNorm = Math.sqrt(vx*vx+vy*vy),
+  f  = (255*vNorm / 60.0) - Math.floor(255*vNorm / 60.0),
+  p  = Math.round(255 * (1.0 - (255 / 255.0))),
+  q  = Math.round(255 * (1.0 - (255 / 255.0) * f)),
+  t  = Math.round(255 * (1.0 - (255 / 255.0) * (1.0 - f))),
+  red, green, blue;
+  switch(Math.floor(255*vNorm / 60.0) % 6){
+    case 0:
+      red = 255, green = t, blue = p;
+      break;
+    case 1:
+      red = q, green = 255, blue = p;
+      break;
+    case 2:
+      red = p, green = 255, blue = t;
+      break;
+    case 3:
+      red = p, green = q, blue = 255;
+      break;
+    case 4:
+      red = t, green = p, blue = 255;
+      break;
+    case 5:
+      red = 255, green = p, blue = q;
+      break;
+    default:
+      break;
+  }
+  nodeArray[count].setup(mouseX, mouseY, vx, vy, "rgba("+red+","+green+","+blue+",1)");
+  prevX = mouseX, prevY = mouseY;
+  if(++count >= nodeNumber){
+    count = 0;
+  }
+  nodeArray.forEach(updateForEach);
+}
+function handleResize() {
+  stage.canvas.width = innerWidth;
+  stage.canvas.height = innerHeight;
+  background.graphics.clear();
+  if(innerWidth/innerHeight>=img.width/img.height){
+    matrix2d.a = matrix2d.d = innerWidth/img.width;
+  }else{
+    matrix2d.a = matrix2d.d = innerHeight/img.height;
+  }
+  background.graphics.beginBitmapFill(img, "no-repeat", matrix2d).drawRect(0, 0, innerWidth, innerHeight).endFill();
+}
+function updateForEach(element, index, array) {
+  element.update();
+}
 
-<div id="messages"></div>
+var Node = (function () {
+  function Node() {
+    this.circle = new createjs.Shape();
+    stage.addChild(this.circle);
+  }
+  Node.prototype.setup = function (x, y, vx, vy, color) {
+    var vNorm = Math.sqrt(vx*vx+vy*vy);
+    this.circle.graphics.beginFill(color).drawCircle(0, 0, 0.2*vNorm);
+    this.circle.x = x;
+    this.circle.y = y;
+    this.vx = vx;
+    this.vy = vy;
+    stage.setChildIndex (this.circle,nodeNumber-1);
+  };
+  Node.prototype.update = function () {
+    var vNorm = Math.sqrt(this.vx*this.vx+this.vy*this.vy);
+    this.vx *= 0.9;
+    this.vy *= 0.9;
+    this.circle.x += this.vx + vNorm*Math.sin(0.01*this.circle.y);
+    this.circle.y += this.vy + vNorm*Math.sin(0.01*this.circle.x);
+  };
+  return Node;
+})();
+
+window.onload = setup;
+
+function construct_clock() {
+   var date = new Date(),
+   year = date.getFullYear(),
+   month = date.getMonth()+1,
+   day = date.getDate(),
+   hour = date.getHours(),
+   minute = date.getMinutes(),
+   second = date.getSeconds();
+   document.getElementById('current_time_value').textContent = year + "/" + month + "/" + day + " " + hour + ":" + minute + ":" + second;
+   setTimeout(construct_clock,10);
+}
+
+construct_clock();
+
+-->
+</script>

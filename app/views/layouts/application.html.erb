@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Visual WebSocket Chat</title>
+    <title>Generative Chat</title>
     <%= csrf_meta_tags %>
 
   	<%= stylesheet_link_tag  'application', media: 'all', 'data-turbolinks-track': 'reload' %>
@@ -10,5 +10,35 @@
 
   <body>
     <%= yield %>
+    <script type="application/javascript">
+    <!--
+    	var chatShellStyle = document.getElementById("chat_shell").style,
+    	chatShellOpenStyle = document.getElementById("chat_shell_open").style,
+    	timeStyle = document.getElementById("time").style,
+    	timeOpenStyle = document.getElementById("time_open").style;
+    	document.getElementById("chat_shell_open").addEventListener("click", function(){
+			if(chatShellStyle.opacity == "0"){
+				chatShellStyle.opacity = "0.5";
+				chatShellStyle.pointerEvents = "auto";
+				chatShellOpenStyle.background = "rgba(0,0,0,0.5)";
+			}else{
+				chatShellStyle.opacity = "0";
+				chatShellStyle.pointerEvents = "none";
+				chatShellOpenStyle.background = "rgba(0,0,0,0)";
+			}
+		});
+		document.getElementById("time_open").addEventListener("click", function(){
+			if(timeStyle.opacity == "0"){
+				timeStyle.opacity = "1";
+				timeStyle.pointerEvents = "auto";
+				timeOpenStyle.background = "rgba(0,0,0,0.5)";
+			}else{
+				timeStyle.opacity = "0";
+				timeStyle.pointerEvents = "none";
+				timeOpenStyle.background = "rgba(0,0,0,0)";
+			}
+		});
+    -->
+    </script>
   </body>
 </html>
