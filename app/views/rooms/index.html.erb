@@ -28,10 +28,94 @@
 <script type="application/javascript" src="https://code.createjs.com/easeljs-0.8.2.min.js"></script>
 <script type="application/javascript">
 <!--
+var stage, circle, line, background, matrix2d, img, nodeNumber=1000, nodeArray = [], linkArray = [], prevX=0, prevY=0, count=0,
 
-var stage, circle, line, background, matrix2d, img, nodeNumber=1000, nodeArray = [], linkArray = [], prevX=0, prevY=0, count=0;
+Node = (function () {
+  function Node() {
+    this.circle = new createjs.Shape();
+    stage.addChild(this.circle);
+  }
+  Node.prototype.setup = function (x, y, vx, vy, color) {
+    var vNorm = Math.sqrt(vx*vx+vy*vy);
+    this.circle.graphics.beginFill(color).drawCircle(0, 0, 0.2*vNorm);
+    this.circle.x = x;
+    this.circle.y = y;
+    this.vx = vx;
+    this.vy = vy;
+    stage.setChildIndex (this.circle,nodeNumber-1);
+  };
+  Node.prototype.update = function () {
+    var vNorm = Math.sqrt(this.vx*this.vx+this.vy*this.vy);
+    this.vx *= 0.9;
+    this.vy *= 0.9;
+    this.circle.x += this.vx + vNorm*Math.sin(0.01*this.circle.y);
+    this.circle.y += this.vy + vNorm*Math.sin(0.01*this.circle.x);
+  };
+  return Node;
+})();
 
-function setup(){
+function constructClock() {
+   var date = new Date(),
+   year = date.getFullYear(),
+   month = date.getMonth()+1,
+   day = date.getDate(),
+   hour = date.getHours(),
+   minute = date.getMinutes(),
+   second = date.getSeconds();
+   document.getElementById('current_time_value').textContent = year + "/" + month + "/" + day + " " + hour + ":" + minute + ":" + second;
+   setTimeout(constructClock,1000);
+}
+function handleTick(){
+  var mouseX = window.receivedPointData["mousex"], mouseY = window.receivedPointData["mousey"], vx = mouseX - prevX, vy = mouseY - prevY, vNorm = Math.sqrt(vx*vx+vy*vy),
+  f  = (255*vNorm / 60.0) - Math.floor(255*vNorm / 60.0),
+  p  = Math.round(255 * (1.0 - (255 / 255.0))),
+  q  = Math.round(255 * (1.0 - (255 / 255.0) * f)),
+  t  = Math.round(255 * (1.0 - (255 / 255.0) * (1.0 - f))),
+  red, green, blue;
+  switch(Math.floor(255*vNorm/60.0)%6){
+    case 0:
+      red = 255, green = t, blue = p;
+      break;
+    case 1:
+      red = q, green = 255, blue = p;
+      break;
+    case 2:
+      red = p, green = 255, blue = t;
+      break;
+    case 3:
+      red = p, green = q, blue = 255;
+      break;
+    case 4:
+      red = t, green = p, blue = 255;
+      break;
+    case 5:
+      red = 255, green = p, blue = q;
+      break;
+    default:
+      break;
+  }
+  nodeArray[count].setup(mouseX, mouseY, vx, vy, "rgba("+red+","+green+","+blue+",1)");
+  prevX = mouseX, prevY = mouseY;
+  if(++count >= nodeNumber){
+    count = 0;
+  }
+  nodeArray.forEach(function(element, index, array) {
+  	element.update();
+  });
+}
+function handleResize() {
+  stage.canvas.width = innerWidth;
+  stage.canvas.height = innerHeight;
+  background.graphics.clear();
+  if(innerWidth/innerHeight>=img.width/img.height){
+    matrix2d.a = matrix2d.d = innerWidth/img.width;
+  }else{
+    matrix2d.a = matrix2d.d = innerHeight/img.height;
+  }
+  background.graphics.beginBitmapFill(img, "no-repeat", matrix2d).drawRect(0, 0, innerWidth, innerHeight).endFill();
+}
+window.onload = function(){
+  constructClock();
   stage = new createjs.Stage("myCanvas");
   stage.autoClear = false;
   stage.compositeOperation = "normal";
@@ -60,97 +144,6 @@ function setup(){
   createjs.Ticker.addEventListener("tick", stage);
   createjs.Ticker.addEventListener("tick", handleTick);
   window.onresize = handleResize;
-}
-function handleTick(){
-  var mouseX = stage.mouseX, mouseY = stage.mouseY, vx = mouseX - prevX, vy = mouseY - prevY, vNorm = Math.sqrt(vx*vx+vy*vy),
-  f  = (255*vNorm / 60.0) - Math.floor(255*vNorm / 60.0),
-  p  = Math.round(255 * (1.0 - (255 / 255.0))),
-  q  = Math.round(255 * (1.0 - (255 / 255.0) * f)),
-  t  = Math.round(255 * (1.0 - (255 / 255.0) * (1.0 - f))),
-  red, green, blue;
-  switch(Math.floor(255*vNorm / 60.0) % 6){
-    case 0:
-      red = 255, green = t, blue = p;
-      break;
-    case 1:
-      red = q, green = 255, blue = p;
-      break;
-    case 2:
-      red = p, green = 255, blue = t;
-      break;
-    case 3:
-      red = p, green = q, blue = 255;
-      break;
-    case 4:
-      red = t, green = p, blue = 255;
-      break;
-    case 5:
-      red = 255, green = p, blue = q;
-      break;
-    default:
-      break;
-  }
-  nodeArray[count].setup(mouseX, mouseY, vx, vy, "rgba("+red+","+green+","+blue+",1)");
-  prevX = mouseX, prevY = mouseY;
-  if(++count >= nodeNumber){
-    count = 0;
-  }
-  nodeArray.forEach(updateForEach);
-}
-function handleResize() {
-  stage.canvas.width = innerWidth;
-  stage.canvas.height = innerHeight;
-  background.graphics.clear();
-  if(innerWidth/innerHeight>=img.width/img.height){
-    matrix2d.a = matrix2d.d = innerWidth/img.width;
-  }else{
-    matrix2d.a = matrix2d.d = innerHeight/img.height;
-  }
-  background.graphics.beginBitmapFill(img, "no-repeat", matrix2d).drawRect(0, 0, innerWidth, innerHeight).endFill();
-}
-function updateForEach(element, index, array) {
-  element.update();
-}
-
-var Node = (function () {
-  function Node() {
-    this.circle = new createjs.Shape();
-    stage.addChild(this.circle);
-  }
-  Node.prototype.setup = function (x, y, vx, vy, color) {
-    var vNorm = Math.sqrt(vx*vx+vy*vy);
-    this.circle.graphics.beginFill(color).drawCircle(0, 0, 0.2*vNorm);
-    this.circle.x = x;
-    this.circle.y = y;
-    this.vx = vx;
-    this.vy = vy;
-    stage.setChildIndex (this.circle,nodeNumber-1);
-  };
-  Node.prototype.update = function () {
-    var vNorm = Math.sqrt(this.vx*this.vx+this.vy*this.vy);
-    this.vx *= 0.9;
-    this.vy *= 0.9;
-    this.circle.x += this.vx + vNorm*Math.sin(0.01*this.circle.y);
-    this.circle.y += this.vy + vNorm*Math.sin(0.01*this.circle.x);
-  };
-  return Node;
-})();
-
-window.onload = setup;
-
-function construct_clock() {
-   var date = new Date(),
-   year = date.getFullYear(),
-   month = date.getMonth()+1,
-   day = date.getDate(),
-   hour = date.getHours(),
-   minute = date.getMinutes(),
-   second = date.getSeconds();
-   document.getElementById('current_time_value').textContent = year + "/" + month + "/" + day + " " + hour + ":" + minute + ":" + second;
-   setTimeout(construct_clock,10);
-}
-
-construct_clock();
-
+};
 -->
 </script>

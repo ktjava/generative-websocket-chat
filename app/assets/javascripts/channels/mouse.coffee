@@ -7,10 +7,10 @@ App.mouse = App.cable.subscriptions.create "MouseChannel",
 
   received: (data) ->
     # Called when there's incoming data on the websocket for this channel
-    console.log(data)
+    window.receivedPointData = data
 
-  speak: (mousex, mousey) ->
-    @perform 'speak', mousex: mousex, mousey: mousey
+  speak: (time, mousex, mousey) ->
+    @perform 'speak', timestamp: time, mousex: mousex, mousey: mousey
 
   $(document).on 'mousemove', (event) ->
-  	App.mouse.speak event.clientX, event.clientY
+  	App.mouse.speak (new Date()).getTime(), event.clientX, event.clientY
